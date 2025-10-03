@@ -1,0 +1,36 @@
+name: Deploy to PWD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Copy files to PWD
+        uses: appleboy/scp-action@v0.1.3
+        with:
+          host: ${{ secrets.PWD_HOST }}
+          username: root
+          key: ${{ secrets.PWD_SSH_KEY }}
+          port: 22
+          source: "."
+          target: "/root/mkdocs-site"
+
+      - name: Run docker-compose on PWD
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.PWD_HOST }}
+          username: root
+          key: ${{ secrets.PWD_SSH_KEY }}
+          port: 22
+          script: |
+            cd /root/mkdocs-site
+            docker-compose down
+            docker-compose up -d
